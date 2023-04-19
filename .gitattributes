@@ -1,2 +1,240 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+#include <SoftwareSerial.h>
+#include <Servo.h>                                            //includes the servo library
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27,20,4);                               //address for lcd 20x4 display
+
+Servo myservo;
+
+SoftwareSerial nodemcu(0,1);                                       //connecting to node mcu
+
+int parking_slot1 = 4;                                                                    // parking slot1 infrared sensor connected with pin number 4 of arduino
+int parking_slot2 = 5;
+int parking_slot3 = 6;
+int parking_slot4 = 7;
+int parking_slot5 = 8;
+int parking_slot6 = 9;
+
+int entry_gate = 11;                                                     // infrared sensors before and after servo motor to sense entry and exit
+int exit_gate = 12;
+
+int pos1 = 90;                                                           // variable to store the servo position(for gates)
+
+String sensor1; 
+String sensor2; 
+String sensor3; 
+String sensor4; 
+String sensor5; 
+String sensor6; 
+
+String cdata ="";                                                                               // complete data, consisting of sensors values
+
+int S1=0, S2=0, S3=0, S4=0, S5=0, S6=0;
+int flag1=0, flag2=0; 
+int slot = 6;  
+
+void setup(){
+Serial.begin(9600);
+nodemcu.begin(9600);
+
+pinMode(parking_slot1, INPUT);
+pinMode(parking_slot2, INPUT);
+pinMode(parking_slot3, INPUT);
+pinMode(parking_slot4, INPUT);
+pinMode(parking_slot5, INPUT);
+pinMode(parking_slot6, INPUT);
+
+pinMode(e_gate, INPUT);
+pinMode(e_gate, INPUT);
+
+myservo.attach(10);                                                                  // attaches the servo on pin 10 in arduino
+
+lcd.begin(20, 4);  
+lcd.setCursor (0,1);
+lcd.print("    Car  parking  ");
+lcd.setCursor (0,2);
+lcd.print("       System     ");
+delay (2000);
+lcd.clear();   
+
+Read_Sensor();
+
+int total = S1+S2+S3+S4+S5+S6;
+slot = slot-total; 
+}
+
+void loop(){
+  pslot1(); 
+  pslot2();
+  pslot3(); 
+  pslot4();
+  pslot5();
+  pslot6();
+  gates();
+  Read_Sensor();
+  
+   cdata = cdata + sensor1 +"," + sensor2 + ","+ sensor3 +","+ sensor4 + "," + sensor5 + "," + sensor6 +","; // comma will be used a delimeter
+   Serial.println(cdata); 
+   nodemcu.println(cdata);
+   delay(6000); 
+   cdata = ""; 
+
+  digitalWrite(parking_slot1, HIGH); 
+  digitalWrite(parking_slot2, HIGH); 
+  digitalWrite(parking_slot3, HIGH);
+  digitalWrite(parking_slot4, HIGH);
+  digitalWrite(parking_slot5, HIGH);
+  digitalWrite(parking_slot6, HIGH);
+  
+  digitalWrite(e_gate, HIGH);
+  digitalWrite(e_gate, HIGH);
+
+lcd.setCursor (0,0);
+lcd.print("   Have Slot: "); 
+lcd.print(slot);
+lcd.print("    ");  
+
+lcd.setCursor (0,1);
+if(S1==1){lcd.print("S1:Fill ");}                                                                   //to show whether slot is available or not
+     else{lcd.print("S1:Empty");}
+
+lcd.setCursor (10,1);
+if(S2==1){lcd.print("S2:Fill ");}
+     else{lcd.print("S2:Empty");}
+
+lcd.setCursor (0,2);
+if(S3==1){lcd.print("S3:Fill ");}
+     else{lcd.print("S3:Empty");}
+
+lcd.setCursor (10,2);
+if(S4==1){lcd.print("S4:Fill ");}
+     else{lcd.print("S4:Empty");}
+
+ lcd.setCursor (0,3);
+if(S5==1){lcd.print("S5:Fill ");}
+     else{lcd.print("S5:Empty");}
+
+lcd.setCursor (10,3);
+if(S6==1){lcd.print("S6:Fill ");}
+     else{lcd.print("S6:Empty");}    
+
+if(digitalRead (e_gate1) == 0 && flag1==0){                                                                 //to show parking full
+if(slot>0){flag1=1;
+if(flag2==0){slot = slot-1;}
+}else{
+lcd.setCursor (0,0);
+lcd.print(" Sorry Parking Full ");  
+delay(1500);
+}   
+}
+delay(1);
+}
+
+void pslot1() // parkng 1 slot1
+{
+  if( digitalRead(parking_slot1) == LOW) 
+  {
+  sensor1 = "255";
+ delay(200); 
+  } 
+if( digitalRead(parking_slot1) == HIGH)
+{
+  sensor1 = "0";  
+ delay(200);  
+}
+
+}
+
+void pslot2() // parking 1 slot2
+{
+  if( digitalRead(parking_slot2) == LOW) 
+  {
+  sensor2 = "255"; 
+  delay(200); 
+  }
+if( digitalRead(parking_slot2) == HIGH)  
+  {
+  sensor2 = "0";  
+ delay(200);
+  } 
+}
+
+
+void pslot3() // parking 1 slot3
+{
+  if( digitalRead(parking_slot3) == LOW) 
+  {
+  sensor3 = "255"; 
+  delay(200); 
+  }
+if( digitalRead(parking_slot3) == HIGH)  
+  {
+  sensor3 = "0";  
+ delay(200);
+  } 
+}
+
+
+// now for parking 2
+
+void pslot4() // parking 1 slot4
+{
+  if( digitalRead(parking_slot4) == LOW) 
+  {
+  sensor4 = "255"; 
+  delay(200); 
+  }
+if( digitalRead(parking_slot4) == HIGH)  
+  {
+  sensor4 = "0";  
+ delay(200);
+  } 
+}
+
+
+void pslot5() // parking 1 slot5
+{
+  if( digitalRead(parking_slot5) == LOW) 
+  {
+  sensor5 = "255"; 
+  delay(200); 
+  }
+if( digitalRead(parking_slot5) == HIGH)  
+  {
+  sensor5 = "0";  
+ delay(200);
+  } 
+}
+
+
+void pslot6() // parking 1 slot6
+{
+  if( digitalRead(parking_slot6) == LOW) 
+  {
+  sensor6 = "255"; 
+  delay(200); 
+  }
+if( digitalRead(parking_slot6) == HIGH)  
+  {
+  sensor6 = "0";  
+ delay(200);
+  } 
+}
+
+// for the gates
+
+void gates()
+{
+  if (digitalRead(entry_gate) == LOW || digitalRead(exit_gate) == LOW ){
+  for (pos1 = 0; pos1 <= 90; pos1 += 1) { // goes from 0 degrees to 90 degrees
+    // in steps of 1 degree
+    myservo.write(pos1);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  delay(1250);                        //waits 1.25s before closing
+  for (pos1 = 90; pos1 >= 0; pos1 -= 1) { // goes from 90 degrees to 0 degrees
+    myservo.write(pos1);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+   }
+  }
+}
